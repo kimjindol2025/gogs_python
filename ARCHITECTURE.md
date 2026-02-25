@@ -50,6 +50,17 @@
   │ ├─ StateMachine                         │
   │ └─ DisasterRecovery                     │
   └─────────────────────────────────────────┘
+              ↓
+【 계층 5: v9.4 — 양자 인터넷 계층 ⭐ 】
+  ┌─────────────────────────────────────────┐
+  │ QuantumNetwork                          │
+  │ ├─ QuantumState & Bell State            │
+  │ ├─ QuantumChannel (손실/잡음 모델)      │
+  │ ├─ QuantumTeleportation                 │
+  │ ├─ EntanglementSwap                     │
+  │ ├─ QuantumKeyDistribution (BB84)        │
+  │ └─ HybridQuantumClassical               │
+  └─────────────────────────────────────────┘
 ```
 
 ---
@@ -362,6 +373,155 @@ Quorum
 
 ---
 
+## **v9.4: 양자 인터넷 & 얽힘 기반 통신 ⭐ Post-Doc**
+
+### 모듈 구조
+
+```
+QuantumState (단일 Qubit)
+├─ measure() → |0⟩ 또는 |1⟩
+├─ apply_hadamard() → 중첩 생성
+├─ apply_pauli_x/z() → Pauli 게이트
+├─ to_bloch_vector() → Bloch 구 표현
+└─ fidelity(other) → 상태 충실도
+
+       ↓
+
+BellState (2-Qubit 얽힘)
+├─ generate_bell_pair() → 완벽한 상관관계
+├─ measure_correlation() → 100% 상호관계
+├─ verify_bell_inequality() → 양자성 증명
+└─ get_entanglement_entropy() → 얽힘도
+
+       ↓
+
+QuantumChannel (양자 전송)
+├─ transmit(state) → 거리 기반 손실
+├─ get_fidelity() → 충실도 측정 (>98%)
+└─ set_distance(km) → 손실률 계산
+
+       ↓
+
+QuantumTeleportation (상태 전달)
+├─ bell_measurement() → 2-bit 고전 정보
+├─ apply_recovery_gate() → 상태 복원
+└─ teleport(state, remote_qubit) → 원격 전달
+
+       ↓
+
+EntanglementSwap (원거리 연결)
+├─ share_bell_pairs() → A-B, B-C 쌍
+├─ perform_bell_measurement_at_B() → 중간 측정
+└─ get_new_bell_pair_A_C() → A-C 얽힘 생성
+
+       ↓
+
+QuantumKeyDistribution (BB84 프로토콜)
+├─ run_protocol(num_qubits) → 키 생성
+├─ alice_prepare_qubits() → 무작위 준비
+├─ bob_measure_qubits() → 무작위 측정
+├─ detect_eavesdropping() → 도청 탐지 (QBER)
+└─ get_secure_key() → 최종 공유키
+
+       ↓
+
+QuantumNetwork (5-노드 글로벌 네트워크)
+├─ create_nodes() → 5개 노드 생성
+├─ establish_bell_pairs() → C(5,2)=10 쌍
+├─ perform_global_entanglement_swap() → 네트워크 연결
+├─ distribute_quantum_key() → 키 배포
+└─ measure_network_quality() → 품질 평가
+
+       ↓
+
+HybridQuantumClassical (양자-고전 통합)
+├─ initialize_system() → 시스템 초기화
+├─ send_quantum_state() → 양자 전송
+├─ send_classical_bits() → 고전 메시지
+└─ run_full_system() → 전체 통합 실행
+```
+
+### 양자 통신 흐름
+
+```
+【 Qubit 준비 】
+  |0⟩ 또는 |1⟩ → Hadamard → (|0⟩ + |1⟩)/√2
+
+【 Bell Pair 생성 】
+  Qubit A + Qubit B → 완벽한 상관관계
+  측정(A) = 0 ⇒ 측정(B) = 0 (100%)
+  측정(A) = 1 ⇒ 측정(B) = 1 (100%)
+
+【 양자 채널 전송 】
+  거리 d km에서 손실률 = 1 - 10^(-0.2*d/10)
+  10 km: ~37% 손실 (63% 충실도)
+  5 km:  ~17% 손실 (83% 충실도)
+
+【 Teleportation (Bell 측정 + 복원) 】
+  1. Alice: Bell 측정 → (bit₀, bit₁)
+  2. 고전 채널 전송 (2 bits)
+  3. Bob: Pauli 복원 게이트 적용
+  4. Bob의 Qubit = Alice의 원본 상태
+
+【 Entanglement Swapping (원거리 연결) 】
+  A-B Bell pair + B-C Bell pair
+         ↓ (B에서 Bell 측정)
+  A-C Bell pair (생성!)
+
+【 BB84 QKD 프로토콜 】
+  1. Alice: 무작위 basis + bits 준비
+  2. Bob: 무작위 basis 선택 후 측정
+  3. Sift: basis 일치한 비트만 유지
+  4. 도청 탐지: QBER < 11% (정상)
+           QBER > 25% (도청!)
+
+【 5-노드 양자 네트워크 】
+  10 Bell 쌍 생성 → Entanglement Swap
+  ↓
+  모든 노드가 서로 얽힘 상태 달성
+  ↓
+  QKD 배포로 보안 키 공유
+  ↓
+  양자-고전 혼합 통신 가능
+```
+
+### 양자 메커니즘 시뮬레이션
+
+```
+【 Qubit 상태 표현 】
+  |ψ⟩ = α|0⟩ + β|1⟩
+  정규화: |α|² + |β|² = 1
+  Bloch 벡터: (sin(2θ)cos(φ), sin(2θ)sin(φ), cos(2θ))
+
+【 측정 (Measurement Collapse) 】
+  |ψ⟩ = (|0⟩ + |1⟩)/√2
+  측정 결과: |0⟩ (확률 50%) 또는 |1⟩ (확률 50%)
+  후측정 상태: 100% 확실 (중첩 붕괴)
+
+【 Bell 상태 (최대 얽힘) 】
+  |Φ⁺⟩ = (|00⟩ + |11⟩)/√2
+  어떤 결과: 50% (0,0), 50% (1,1)
+  상관도: 100% (항상 같음)
+
+【 Fidelity (충실도) 】
+  F(ρ, σ) = Tr(√(√ρ σ √ρ))²
+  F = 1: 동일한 상태
+  F > 0.98: 매우 좋음 (실용적)
+  F < 0.5: 실패
+```
+
+### 핵심 특성
+
+- **양자 상태**: Qubit 중첩 & 측정 시뮬레이션
+- **얽힘**: Bell 쌍으로 완벽한 상관관계 달성
+- **채널 모델**: 거리 기반 현실적 손실/잡음
+- **프로토콜**: Teleportation, Swapping, BB84
+- **네트워크**: 5-노드 글로벌 양자 인터넷
+- **보안**: 도청 탐지 기능 포함 QKD
+- **통합**: 양자-고전 혼합 통신 구현
+
+---
+
 ## 🔄 **데이터 흐름 통합도**
 
 ```
@@ -375,7 +535,9 @@ v8.4: Integration & Monitoring
   ↓ (Secured & Optimized)
 v9.3: Global Consensus
   ↓ (Replicated & Consistent)
-Final State (All Nodes)
+v9.4: Quantum Communication ⭐
+  ↓ (Quantum-Encrypted & Entangled)
+Final State (Quantum Network All Nodes)
 ```
 
 ---
@@ -404,10 +566,11 @@ v8.4 (3층 통합)
    ↓
 v9.3 (글로벌 합의)
    ↓
-v9.4* (양자 인터넷)
+v9.4 (양자 인터넷) ✅ 완료!
 ```
 
 각 버전은 이전 버전의 능력을 기반으로 구축되며, 점진적으로 시스템을 복잡화하고 강화합니다.
+**Post-Doctoral 완료**: 모든 5개 계층이 통합되어 양자 네트워크 기반의 글로벌 분산 시스템 완성.
 
 ---
 
