@@ -290,6 +290,8 @@ class ExperimentBuilder:
 
     def set_duration(self, hours: int) -> 'ExperimentBuilder':
         """실험 지속 시간 설정 (시간)"""
+        if hours < 0:
+            raise ValueError("실험 지속 시간은 0 이상이어야 합니다")
         self._experiment['duration_hours'] = hours
         return self
 
