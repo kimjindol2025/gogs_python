@@ -1,0 +1,30 @@
+# 개발 의존성 (Development Dependencies)
+# 설치: pip install -r requirements-dev.txt
+
+# 코드 형식화 (Code Formatting)
+black>=23.0.0          # 자동 코드 포매팅
+
+# 코드 품질 (Code Quality)
+flake8>=6.0.0          # PEP8 검증
+flake8-docstrings>=1.7 # docstring 검증
+flake8-bugbear>=23.0.0 # 일반적인 버그 탐지
+
+# 타입 검사 (Type Checking)
+mypy>=1.0.0            # 정적 타입 검사
+types-setuptools       # setuptools 타입 정보
+
+# 테스트 (Testing)
+pytest>=7.0.0          # 테스트 프레임워크
+pytest-cov>=4.0.0      # 커버리지 측정
+pytest-asyncio>=0.20.0 # asyncio 테스트 지원
+
+# 성능 분석 (Performance Profiling)
+memory-profiler>=0.60.0 # 메모리 사용량 분석
+
+# 문서 (Documentation)
+sphinx>=5.0.0          # 문서 생성
+sphinx-rtd-theme>=1.2.0 # RTD 테마
+
+# 개발 편의 (Development Tools)
+ipython>=8.0.0         # 대화형 Python
+ipdb>=0.13.0           # 디버거

@@ -1,0 +1,30 @@
+# flake8 설정 (PEP8 검증)
+# 실행: flake8 .
+
+[flake8]
+max-line-length = 100
+max-complexity = 10
+
+# 무시할 규칙:
+# E203: 콜론 전 공백 (Black과 호환)
+# W503: 이항 연산자 전 줄 바꿈 (Black과 호환)
+# E501: 라인 길이 (pyproject.toml에서 처리)
+ignore = E203, W503, E501
+
+# 제외할 디렉토리/파일
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    build,
+    dist,
+    *.egg-info,
+    .pytest_cache,
+    .mypy_cache
+
+# 문서 제거 (docstring 검증 활성화)
+docstring-convention = google
+
+# 선택 가능한 플러그인 활성화
+select = B,C,E,F,W,T4,B9
