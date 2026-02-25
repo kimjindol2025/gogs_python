@@ -955,6 +955,454 @@ class DisasterRecovery:
 
 ---
 
+## **v9.4: 양자 인터넷 & 얽힘 기반 통신** ⭐
+
+### Enum 정의
+
+#### `MeasurementResult`
+```python
+class MeasurementResult(Enum):
+    ZERO = 0      # |0⟩ 상태 측정
+    ONE = 1       # |1⟩ 상태 측정
+```
+
+#### `ChannelType`
+```python
+class ChannelType(Enum):
+    QUANTUM = "quantum"    # 양자 채널
+    CLASSICAL = "classical"  # 고전 채널
+```
+
+#### `QKDPhase`
+```python
+class QKDPhase(Enum):
+    PREPARATION = "preparation"    # Qubit 준비
+    MEASUREMENT = "measurement"    # 측정
+    SIFT = "sift"                  # 기저 일치 필터
+    VERIFICATION = "verification"  # 도청 탐지
+```
+
+### Dataclass 정의
+
+#### `QuantumBit`
+```python
+@dataclass
+class QuantumBit:
+    alpha: complex           # |0⟩ 진폭
+    beta: complex            # |1⟩ 진폭
+
+# 정규화 조건: |alpha|² + |beta|² = 1
+```
+
+#### `TeleportationResult`
+```python
+@dataclass
+class TeleportationResult:
+    success: bool            # 텔레포테이션 성공 여부
+    fidelity: float          # 충실도 (0~1)
+    bell_measurement: Tuple[int, int]  # Bell 측정 결과
+    recovery_gates: List[str]  # 적용된 복원 게이트
+```
+
+#### `QKDKey`
+```python
+@dataclass
+class QKDKey:
+    key_bits: List[int]      # 전체 큐비트
+    sifted_bits: List[int]   # 기저 일치 비트
+    final_key: List[int]     # 최종 공유 키
+    qber: float              # Quantum Bit Error Rate
+    eavesdropping_detected: bool  # 도청 탐지 여부
+```
+
+#### `NetworkNode`
+```python
+@dataclass
+class NetworkNode:
+    node_id: str             # 노드 ID
+    quantum_states: List[QuantumBit]  # 저장된 양자 상태
+    entangled_with: List[str]  # 얽혀있는 노드 ID
+    shared_keys: Dict[str, List[int]]  # 공유 키 (노드ID → 키)
+```
+
+### QuantumState 클래스
+
+```python
+class QuantumState:
+    def __init__(self, alpha: complex, beta: complex):
+        """
+        단일 Qubit 상태 생성.
+
+        Args:
+            alpha: |0⟩ 진폭 (정규화 필요)
+            beta: |1⟩ 진폭 (정규화 필요)
+        """
+        pass
+
+    def measure(self) -> MeasurementResult:
+        """
+        Qubit을 측정하여 0 또는 1 반환.
+
+        Returns:
+            MeasurementResult.ZERO 또는 ZERO
+            확률: |alpha|²로 ZERO, |beta|²로 ONE
+        """
+        pass
+
+    def apply_hadamard(self) -> 'QuantumState':
+        """
+        Hadamard 게이트 적용 (H = (|0⟩ + |1⟩)/√2).
+
+        Returns:
+            변환된 QuantumState
+        """
+        pass
+
+    def apply_pauli_x(self) -> 'QuantumState':
+        """
+        Pauli-X 게이트 적용 (bit-flip).
+        """
+        pass
+
+    def apply_pauli_z(self) -> 'QuantumState':
+        """
+        Pauli-Z 게이트 적용 (phase-flip).
+        """
+        pass
+
+    def to_bloch_vector(self) -> Tuple[float, float, float]:
+        """
+        Bloch 구 벡터 표현 반환.
+
+        Returns:
+            (x, y, z) 좌표
+        """
+        pass
+
+    def fidelity(self, other: 'QuantumState') -> float:
+        """
+        다른 상태와의 충실도 계산.
+
+        Returns:
+            0~1 사이의 충실도
+        """
+        pass
+```
+
+### BellState 클래스
+
+```python
+class BellState:
+    def generate_bell_pair(self) -> Tuple[QuantumState, QuantumState]:
+        """
+        최대 얽힘 Bell 쌍 생성: |Φ⁺⟩ = (|00⟩ + |11⟩)/√2.
+
+        Returns:
+            (Qubit A, Qubit B)
+            항상 같은 측정 결과 (100% 상관도)
+        """
+        pass
+
+    def measure_correlation(self) -> Tuple[int, int]:
+        """
+        Bell 쌍 측정으로 상관도 확인.
+
+        Returns:
+            (결과 A, 결과 B)
+            항상 같음 (0,0) 또는 (1,1)
+        """
+        pass
+
+    def verify_bell_inequality(self, measurements: int) -> Tuple[float, bool]:
+        """
+        Bell 부등식 위반으로 양자성 증명.
+
+        Args:
+            measurements: 측정 반복 횟수
+
+        Returns:
+            (CHSH 값, 부등식 위반 여부)
+            S ≥ 2.0: 양자 세계 (고전 불가능)
+        """
+        pass
+
+    def get_entanglement_entropy(self) -> float:
+        """
+        얽힘 엔트로피 반환.
+
+        Returns:
+            0~1 사이 (1.0 = 최대 얽힘)
+        """
+        pass
+```
+
+### QuantumChannel 클래스
+
+```python
+class QuantumChannel:
+    def __init__(self, loss_rate: float = 0.01, noise_level: float = 0.01):
+        """
+        양자 채널 초기화.
+
+        Args:
+            loss_rate: 기본 손실률 (0~1)
+            noise_level: 노이즈 수준 (0~1)
+        """
+        pass
+
+    def transmit(self, state: QuantumState) -> QuantumState:
+        """
+        양자 상태를 채널로 전송.
+
+        Args:
+            state: 전송할 Qubit
+
+        Returns:
+            손실/잡음 적용된 상태
+        """
+        pass
+
+    def get_fidelity(self) -> float:
+        """
+        현재 채널의 충실도 반환.
+
+        Returns:
+            충실도 (0~1)
+            10km: ~0.63, 5km: ~0.83, 0km: ~0.99
+        """
+        pass
+
+    def set_distance(self, km: float):
+        """
+        전송 거리 설정.
+
+        Args:
+            km: 거리 (킬로미터)
+        """
+        pass
+```
+
+### QuantumTeleportation 클래스
+
+```python
+class QuantumTeleportation:
+    def shared_bell_pair(self) -> Tuple[QuantumState, QuantumState]:
+        """
+        Alice와 Bob이 공유할 Bell 쌍 생성.
+        """
+        pass
+
+    def bell_measurement(self, qubit1: QuantumState,
+                        qubit2: QuantumState) -> Tuple[int, int]:
+        """
+        Bell 측정으로 2비트 고전 정보 추출.
+
+        Returns:
+            (bit 0, bit 1) - Alice가 보낼 고전 정보
+        """
+        pass
+
+    def apply_recovery_gate(self, qubit: QuantumState,
+                           bit0: int, bit1: int) -> QuantumState:
+        """
+        Bell 측정 결과를 기반으로 Pauli 게이트 적용.
+
+        Returns:
+            원본 상태가 복원된 Qubit
+        """
+        pass
+
+    def teleport(self, state: QuantumState,
+                remote_qubit: QuantumState) -> TeleportationResult:
+        """
+        양자 상태 텔레포테이션.
+
+        Args:
+            state: 전송할 상태
+            remote_qubit: 원격 노드의 Qubit
+
+        Returns:
+            텔레포테이션 결과 (성공, 충실도 등)
+        """
+        pass
+```
+
+### EntanglementSwap 클래스
+
+```python
+class EntanglementSwap:
+    def share_bell_pairs(self) -> Tuple[Tuple[QuantumState, QuantumState],
+                                        Tuple[QuantumState, QuantumState]]:
+        """
+        A-B, B-C Bell 쌍 생성.
+
+        Returns:
+            ((QA, QB), (QB', QC))
+        """
+        pass
+
+    def perform_bell_measurement_at_B(self,
+                                      bell_ab: Tuple[QuantumState, QuantumState],
+                                      bell_bc: Tuple[QuantumState, QuantumState]
+                                      ) -> Tuple[int, int]:
+        """
+        중간 노드 B에서 Bell 측정 수행.
+
+        Returns:
+            (bit0, bit1) - A와 C를 연결하는 정보
+        """
+        pass
+
+    def get_new_bell_pair_A_C(self,
+                              bell_ab: Tuple[QuantumState, QuantumState],
+                              bell_bc: Tuple[QuantumState, QuantumState]
+                              ) -> Tuple[float, float]:
+        """
+        Entanglement Swap으로 생성된 A-C Bell 쌍 평가.
+
+        Returns:
+            (충실도, 상관도)
+        """
+        pass
+```
+
+### QuantumKeyDistribution 클래스
+
+```python
+class QuantumKeyDistribution:
+    def run_protocol(self, num_qubits: int) -> QKDKey:
+        """
+        BB84 프로토콜 실행.
+
+        Args:
+            num_qubits: 생성할 큐비트 수
+
+        Returns:
+            QKDKey 객체 (최종 공유 키 포함)
+        """
+        pass
+
+    def alice_prepare_qubits(self, num_qubits: int
+                            ) -> Tuple[List[QuantumBit], List[str]]:
+        """
+        Alice가 무작위 basis로 큐비트 준비.
+
+        Returns:
+            (Qubit 리스트, Basis 리스트)
+        """
+        pass
+
+    def bob_measure_qubits(self, qubits: List[QuantumBit]
+                          ) -> Tuple[List[int], List[str]]:
+        """
+        Bob이 무작위 basis로 측정.
+
+        Returns:
+            (측정 결과, Basis 리스트)
+        """
+        pass
+
+    def detect_eavesdropping(self) -> bool:
+        """
+        QBER로 도청 탐지.
+
+        Returns:
+            QBER < 11%: False (정상)
+            QBER > 25%: True (도청 감지!)
+        """
+        pass
+```
+
+### QuantumNetwork 클래스
+
+```python
+class QuantumNetwork:
+    def create_nodes(self, num_nodes: int = 5):
+        """
+        5개 노드의 글로벌 양자 네트워크 생성.
+        """
+        pass
+
+    def establish_bell_pairs(self):
+        """
+        모든 노드 쌍에 대해 Bell 쌍 생성.
+
+        C(5,2) = 10개 Bell 쌍 생성
+        """
+        pass
+
+    def perform_global_entanglement_swap(self) -> float:
+        """
+        전체 네트워크에서 Entanglement Swapping 수행.
+
+        Returns:
+            전체 네트워크의 평균 충실도
+        """
+        pass
+
+    def distribute_quantum_key(self):
+        """
+        모든 노드에 QKD로 보안 키 배포.
+        """
+        pass
+
+    def measure_network_quality(self) -> Dict[str, Any]:
+        """
+        네트워크 품질 평가.
+
+        Returns:
+            {
+                "avg_fidelity": 0.95,
+                "num_bell_pairs": 10,
+                "nodes_connected": 5
+            }
+        """
+        pass
+```
+
+### HybridQuantumClassical 클래스
+
+```python
+class HybridQuantumClassical:
+    def initialize_system(self):
+        """
+        양자-고전 혼합 시스템 초기화.
+        """
+        pass
+
+    def send_quantum_state(self, source: str, destination: str,
+                          state: QuantumState) -> float:
+        """
+        양자 상태 전송.
+
+        Returns:
+            도착 충실도
+        """
+        pass
+
+    def send_classical_bits(self, message: str):
+        """
+        고전 메시지 전송.
+        """
+        pass
+
+    def run_full_system(self) -> Dict[str, Any]:
+        """
+        전체 시스템 실행 (양자 + 고전 통합).
+
+        Returns:
+            {
+                "system_running": True,
+                "execution_time_ms": 123.45,
+                "network_quality": {...},
+                "results": {"quantum_states": [...], "classical_messages": [...]}
+            }
+        """
+        pass
+```
+
+---
+
 ## 📚 **공통 타입 정의**
 
 ### LogEntry
