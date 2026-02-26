@@ -15,6 +15,7 @@
 // Z-Lang 헤더
 #include "codegen/CodeGenerator.h"
 #include "codegen/Type.h"
+#include "codegen/BackendCompiler.h"  // 【 Phase 2: Backend 】
 #include "ast/ASTNode.h"
 #include "semantic/SymbolTable.h"
 #include "lexer/Lexer.h"
@@ -416,16 +417,71 @@ public:
             return 1;
         }
 
+        // 【 Phase 2: Backend Compilation 】
+        // Stage 7-9: IR → Assembly → Object → Executable
+
+        if (emit_ir) {
+            // IR만 생성하는 경우 (기본 동작)
+            if (verbose) {
+                std::cout << "\n【 IR 생성 완료 】" << std::endl;
+            }
+        } else {
+            // Backend 컴파일: Assembly, Object, Executable 생성
+            if (verbose) std::cout << "🔄 Backend 컴파일 시작..." << std::endl;
+
+            BackendOptions backend_opts;
+            backend_opts.verbose = verbose;
+            backend_opts.optimize = true;
+            backend_opts.wcet_friendly = true;  // Real-Time 최적화
+
+            BackendCompiler backend;
+
+            // 출력 파일명 결정
+            std::string exe_file = output_file;
+            if (exe_file.substr(exe_file.find_last_of(".") + 1) == "ll") {
+                exe_file = exe_file.substr(0, exe_file.find_last_of("."));
+            }
+            if (exe_file.empty()) {
+                exe_file = "a.out";
+            }
+
+            // Backend 컴파일 수행
+            if (!backend.compile(output_file, exe_file, backend_opts)) {
+                std::cerr << "❌ Backend 컴파일 실패" << std::endl;
+                for (const auto& err : backend.getErrors()) {
+                    std::cerr << "  - " << err << std::endl;
+                }
+                LLVMDisposeModule(module);
+                return 1;
+            }
+
+            if (verbose) {
+                std::cout << "✅ Backend 컴파일 완료" << std::endl;
+            }
+        }
+
         // 정리
         LLVMDisposeModule(module);
 
         std::cout << "\n✅ 컴파일 완료!" << std::endl;
         std::cout << "📄 출력: " << output_file << std::endl;
-        std::cout << "\n【 다음 단계 】" << std::endl;
-        std::cout << "  1. IR 확인: cat " << output_file << std::endl;
-        std::cout << "  2. Object 생성: llc " << output_file << " -o output.o" << std::endl;
-        std::cout << "  3. 실행 파일: gcc output.o -o executable" << std::endl;
-        std::cout << "  4. 실행: ./executable" << std::endl;
+
+        if (!emit_ir) {
+            std::string exe_file = output_file;
+            if (exe_file.substr(exe_file.find_last_of(".") + 1) == "ll") {
+                exe_file = exe_file.substr(0, exe_file.find_last_of("."));
+            }
+            std::cout << "🔧 실행 파일: " << exe_file << std::endl;
+            std::cout << "\n【 다음 단계 】" << std::endl;
+            std::cout << "  1. 실행: ./" << exe_file << std::endl;
+            std::cout << "  2. IR 확인: cat " << output_file << std::endl;
+        } else {
+            std::cout << "\n【 다음 단계 】" << std::endl;
+            std::cout << "  1. IR 확인: cat " << output_file << std::endl;
+            std::cout << "  2. Assembly 생성: llc " << output_file << " -o output.s" << std::endl;
+            std::cout << "  3. Object 생성: as output.s -o output.o" << std::endl;
+            std::cout << "  4. 실행 파일: gcc output.o -o executable" << std::endl;
+        }
 
         return 0;
     }
