@@ -151,6 +151,10 @@ LLVMValueRef CodeGenerator::visitIdentifier(const std::shared_ptr<IdentifierNode
         return nullptr;
     }
 
+    // 【 Stage 3 강화: 변수의 타입을 inferred_type으로 설정 】
+    // 이를 통해 visitBinaryOp에서 피연산자 타입 검증 가능
+    id->inferred_type = sym->type;
+
     // 변수의 주소에서 값 로드
     LLVMTypeRef var_type = convertType(sym->type);
     return LLVMBuildLoad2(builder, var_type, sym->llvm_value, id->name.c_str());
@@ -207,7 +211,12 @@ LLVMValueRef CodeGenerator::visitBinaryOp(const std::shared_ptr<BinaryOpNode>& b
         return nullptr;
     }
 
+    // 【 Stage 3 강화: 피연산자의 타입으로부터 연산 타입 결정 】
+    // binop->inferred_type이 Unknown이면 좌측 피연산자의 타입 사용
     Type op_type = binop->inferred_type;
+    if (op_type.base == BuiltinType::Unknown && binop->left) {
+        op_type = binop->left->inferred_type;
+    }
 
     // 【 정수 연산 】
     if (isIntegerType(op_type)) {
