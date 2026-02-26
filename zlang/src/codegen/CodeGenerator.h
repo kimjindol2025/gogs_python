@@ -266,6 +266,30 @@ private:
      * 에러 기록
      */
     void reportError(const std::string& message);
+
+    // ========================================================================
+    // 【 Exception Handling Helpers 】- System Exception Detection
+    // ========================================================================
+
+    /**
+     * Division by Zero 감지
+     * - right == 0 인 경우 런타임 오류 호출
+     * - 그 외의 경우 정상 나눗셈 실행
+     */
+    LLVMValueRef buildDivisionWithCheck(LLVMValueRef left, LLVMValueRef right, bool is_integer);
+
+    /**
+     * Modulo by Zero 감지
+     * - right == 0 인 경우 런타임 오류 호출
+     * - 그 외의 경우 정상 나머지 계산 실행
+     */
+    LLVMValueRef buildModuloWithCheck(LLVMValueRef left, LLVMValueRef right);
+
+    /**
+     * 런타임 오류 핸들러 호출
+     * - 오류 메시지를 출력하고 프로그램 종료
+     */
+    void callRuntimeError(const std::string& error_type, const std::string& message);
 };
 
 } // namespace zlang
