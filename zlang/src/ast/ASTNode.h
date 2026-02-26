@@ -32,10 +32,13 @@ public:
         While,
         Return,
 
-        // 【 Step 2: Exception Handling 】
+        // 【 Step 2: Result Type 】
         ResultOk,    // Result<T, E>::Ok(value)
         ResultErr,   // Result<T, E>::Err(error)
         Match,       // match expression (패턴 매칭)
+
+        // 【 Step 3: Exception Handling (try-catch-finally) 】
+        TryCatch,    // try-catch-finally 문
 
         // 프로그램 레벨
         Function,
@@ -293,6 +296,45 @@ public:
 
     std::string toString() const override {
         return "Function(" + func_name + ")";
+    }
+};
+
+// ============================================================================
+// 【 Step 3: try-catch-finally 노드 】
+// ============================================================================
+
+/**
+ * CatchClause: catch 블록 정의
+ * catch (e: ExceptionType) { ... }
+ */
+struct CatchClause {
+    std::string exception_var;              // 예외 변수명 (e)
+    std::string exception_type;             // 예외 타입 (ExceptionType)
+    std::shared_ptr<BlockNode> body;        // catch 블록
+};
+
+/**
+ * TryCatchNode: try-catch-finally 문
+ * try { ... }
+ * catch (e: Exception1) { ... }
+ * catch (e: Exception2) { ... }
+ * finally { ... }
+ */
+class TryCatchNode : public ASTNode {
+public:
+    std::shared_ptr<BlockNode> try_block;           // try 블록
+    std::vector<CatchClause> catch_clauses;         // catch 블록들
+    std::shared_ptr<BlockNode> finally_block;       // finally 블록 (선택사항)
+
+    TryCatchNode(std::shared_ptr<BlockNode> try_b,
+                 std::vector<CatchClause> catches = {},
+                 std::shared_ptr<BlockNode> finally_b = nullptr)
+        : ASTNode(NodeType::TryCatch), try_block(try_b),
+          catch_clauses(catches), finally_block(finally_b) {}
+
+    std::string toString() const override {
+        return "TryCatch(" + std::to_string(catch_clauses.size()) + " catches" +
+               (finally_block ? ", finally" : "") + ")";
     }
 };
 

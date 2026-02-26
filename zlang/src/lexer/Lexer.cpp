@@ -29,6 +29,12 @@ const std::unordered_map<std::string, TokenType> Lexer::keywords = {
     {"bool",     TokenType::KW_BOOL},
     {"void",     TokenType::KW_VOID},
     {"string",   TokenType::KW_STRING},
+
+    // 【 Step 3: Exception Handling 】
+    {"try",      TokenType::KW_TRY},
+    {"catch",    TokenType::KW_CATCH},
+    {"finally",  TokenType::KW_FINALLY},
+    {"throw",    TokenType::KW_THROW},
 };
 
 // ============================================================================

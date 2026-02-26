@@ -84,6 +84,9 @@ private:
     std::shared_ptr<WhileNode> parseWhileStatement();
     std::shared_ptr<ReturnNode> parseReturnStatement();
 
+    // 【 Step 3: Exception Handling 】
+    std::shared_ptr<TryCatchNode> parseTryCatch();
+
     // ========================================================================
     // 【 Expression 파싱 (우선순위 처리) 】
     // ========================================================================

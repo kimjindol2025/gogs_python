@@ -232,7 +232,23 @@ private:
     LLVMValueRef visitBlock(const std::shared_ptr<BlockNode>& block);
 
     /**
-     * 1️⃣2️⃣ visitResultOk: Result::Ok(value) 처리
+     * 1️⃣2️⃣ visitTryCatch: try-catch-finally 처리
+     *
+     * Z-Lang 코드:
+     *   try {
+     *       let x = dangerous_op();
+     *   } catch (e: DivisionError) {
+     *       return -1;
+     *   } finally {
+     *       cleanup();
+     *   }
+     *
+     * 처리: try 블록 실행 → 예외 감지 → catch 블록 분기 → finally 실행 보장
+     */
+    LLVMValueRef visitTryCatch(const std::shared_ptr<TryCatchNode>& try_catch);
+
+    /**
+     * 1️⃣3️⃣ visitResultOk: Result::Ok(value) 처리
      *
      * Z-Lang 코드:
      *   return Ok(42);

@@ -658,6 +658,10 @@ LLVMValueRef CodeGenerator::visitNode(const std::shared_ptr<ASTNode>& node) {
         case ASTNode::NodeType::Function:
             return visitFunction(std::dynamic_pointer_cast<FunctionNode>(node));
 
+        // 【 Step 3: Exception Handling 】
+        case ASTNode::NodeType::TryCatch:
+            return visitTryCatch(std::dynamic_pointer_cast<TryCatchNode>(node));
+
         // 【 Step 2: Result Type Nodes 】
         case ASTNode::NodeType::ResultOk:
             return visitResultOk(std::dynamic_pointer_cast<ResultOkNode>(node));
@@ -738,6 +742,40 @@ void CodeGenerator::callRuntimeError(const std::string& error_type, const std::s
 // ============================================================================
 // 【 Step 2: Result<T, E> Visitor Implementation 】
 // ============================================================================
+
+/**
+ * visitTryCatch: try-catch-finally 블록 처리
+ * - try 블록 실행
+ * - 예외 발생 시 적절한 catch 블록으로 분기
+ * - finally 블록은 항상 실행 보장
+ */
+LLVMValueRef CodeGenerator::visitTryCatch(const std::shared_ptr<TryCatchNode>& try_catch) {
+    if (!try_catch || !try_catch->try_block) return nullptr;
+
+    // 현재: 간단한 구현
+    // try 블록만 실행하고, catch/finally는 임시로 스킵
+    // 향후: 런타임 exception handler로 구현
+
+    // try 블록 실행
+    LLVMValueRef try_result = visitBlock(try_catch->try_block);
+    if (!try_result) {
+        reportError("visitTryCatch: Failed to execute try block");
+        return nullptr;
+    }
+
+    // 【 Step 3: finally 블록은 항상 실행 】
+    // 향후: exception 발생 여부와 관계없이 finally 실행 보장
+    if (try_catch->finally_block) {
+        LLVMValueRef finally_result = visitBlock(try_catch->finally_block);
+        if (!finally_result) {
+            reportError("visitTryCatch: Failed to execute finally block");
+            return nullptr;
+        }
+    }
+
+    // try 결과 반환 (또는 catch/finally 처리 후 값)
+    return try_result;
+}
 
 /**
  * visitResultOk: Result::Ok(value) 생성

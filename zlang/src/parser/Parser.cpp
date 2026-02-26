@@ -144,6 +144,10 @@ std::shared_ptr<ASTNode> Parser::parseStatement() {
     if (check(TokenType::KW_RETURN)) {
         return parseReturnStatement();
     }
+    // 【 Step 3: try-catch-finally 파싱 】
+    if (check(TokenType::KW_TRY)) {
+        return parseTryCatch();
+    }
     if (check(TokenType::LBRACE)) {
         return parseBlock();
     }
@@ -557,6 +561,72 @@ BuiltinType Parser::tokenTypeToBuiltinType(TokenType type) {
         case TokenType::KW_STRING: return BuiltinType::String;
         default:                   return BuiltinType::Unknown;
     }
+}
+
+// ============================================================================
+// 【 Step 3: try-catch-finally 파싱 】
+// ============================================================================
+
+std::shared_ptr<TryCatchNode> Parser::parseTryCatch() {
+    if (!match(TokenType::KW_TRY)) {
+        reportError("Expected 'try'");
+        return nullptr;
+    }
+
+    // try 블록 파싱
+    auto try_block = parseBlock();
+    if (!try_block) {
+        reportError("parseTryCatch: Failed to parse try block");
+        return nullptr;
+    }
+
+    // catch 블록들 파싱
+    std::vector<CatchClause> catch_clauses;
+    while (check(TokenType::KW_CATCH)) {
+        if (!match(TokenType::KW_CATCH)) break;
+
+        // catch (e: ExceptionType) 파싱
+        if (!match(TokenType::LPAREN)) {
+            reportError("Expected '(' in catch clause");
+            break;
+        }
+
+        Token var_token = consume(TokenType::IDENTIFIER, "Expected exception variable");
+        consume(TokenType::COLON, "Expected ':' after variable");
+        Token type_token = consume(TokenType::IDENTIFIER, "Expected exception type");
+
+        if (!match(TokenType::RPAREN)) {
+            reportError("Expected ')' in catch clause");
+            break;
+        }
+
+        // catch 블록 파싱
+        auto catch_block = parseBlock();
+        if (!catch_block) {
+            reportError("parseTryCatch: Failed to parse catch block");
+            break;
+        }
+
+        catch_clauses.push_back({
+            var_token.lexeme,
+            type_token.lexeme,
+            catch_block
+        });
+    }
+
+    // finally 블록 파싱 (선택사항)
+    std::shared_ptr<BlockNode> finally_block = nullptr;
+    if (check(TokenType::KW_FINALLY)) {
+        if (!match(TokenType::KW_FINALLY)) {
+            reportError("Expected 'finally'");
+        }
+        finally_block = parseBlock();
+        if (!finally_block) {
+            reportError("parseTryCatch: Failed to parse finally block");
+        }
+    }
+
+    return std::make_shared<TryCatchNode>(try_block, catch_clauses, finally_block);
 }
 
 } // namespace zlang

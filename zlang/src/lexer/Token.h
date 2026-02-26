@@ -35,6 +35,12 @@ enum class TokenType {
     KW_TRUE,       // true (literal로도 사용)
     KW_FALSE,      // false (literal로도 사용)
 
+    // 【 Step 3: Exception Handling Keywords 】
+    KW_TRY,        // try
+    KW_CATCH,      // catch
+    KW_FINALLY,    // finally
+    KW_THROW,      // throw
+
     // 타입 키워드
     KW_I32,        // i32
     KW_I64,        // i64
