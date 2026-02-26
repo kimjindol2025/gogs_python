@@ -15,6 +15,9 @@ enum class BuiltinType {
     Bool,       // 불린
     Void,       // 반환값 없음
     String,     // 문자열
+    // 【 Step 2: Result & Option Types 】
+    Result,     // Result<T, E> - 성공/실패 타입
+    Option,     // Option<T> - 어떤 값이거나 None
     Unknown     // 알 수 없는 타입
 };
 
@@ -30,6 +33,16 @@ struct Type {
     bool is_array = false;
     Type* element_type = nullptr;
     int array_size = 0;
+
+    // 【 Step 2: Result<T, E> 타입 】
+    // Result<i64, String> 같은 제네릭 타입 표현
+    bool is_result = false;
+    Type* ok_type = nullptr;      // Result의 Ok(T) 타입
+    Type* err_type = nullptr;     // Result의 Err(E) 타입
+
+    // 【 Step 2: Option<T> 타입 】
+    bool is_option = false;
+    Type* value_type = nullptr;   // Option의 Some(T) 타입
 
     // 소유권 상태
     enum class OwnershipState {

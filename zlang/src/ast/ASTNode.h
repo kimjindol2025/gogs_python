@@ -32,6 +32,11 @@ public:
         While,
         Return,
 
+        // 【 Step 2: Exception Handling 】
+        ResultOk,    // Result<T, E>::Ok(value)
+        ResultErr,   // Result<T, E>::Err(error)
+        Match,       // match expression (패턴 매칭)
+
         // 프로그램 레벨
         Function,
         Program
@@ -288,6 +293,73 @@ public:
 
     std::string toString() const override {
         return "Function(" + func_name + ")";
+    }
+};
+
+// ============================================================================
+// 【 Step 2: Result 타입 노드들 】
+// ============================================================================
+
+/**
+ * ResultOkNode: Result<T, E>::Ok(value)
+ * 성공 값을 wrapping하는 노드
+ */
+class ResultOkNode : public ASTNode {
+public:
+    std::shared_ptr<ASTNode> value;
+
+    explicit ResultOkNode(std::shared_ptr<ASTNode> val)
+        : ASTNode(NodeType::ResultOk), value(val) {}
+
+    std::string toString() const override {
+        return "Ok(" + (value ? value->toString() : "?") + ")";
+    }
+};
+
+/**
+ * ResultErrNode: Result<T, E>::Err(error)
+ * 오류 값을 wrapping하는 노드
+ */
+class ResultErrNode : public ASTNode {
+public:
+    std::shared_ptr<ASTNode> error;
+
+    explicit ResultErrNode(std::shared_ptr<ASTNode> err)
+        : ASTNode(NodeType::ResultErr), error(err) {}
+
+    std::string toString() const override {
+        return "Err(" + (error ? error->toString() : "?") + ")";
+    }
+};
+
+/**
+ * MatchArmNode: match의 한 가지 패턴
+ * match x {
+ *     Ok(v) => { ... },
+ *     Err(e) => { ... },
+ * }
+ */
+struct MatchArm {
+    std::string pattern;                        // "Ok" 또는 "Err"
+    std::shared_ptr<ASTNode> pattern_expr;      // Ok(v) 또는 Err(e)
+    std::shared_ptr<BlockNode> body;            // => 다음의 블록
+};
+
+/**
+ * MatchNode: match 표현식
+ * Result<T, E> 타입의 값을 패턴 매칭으로 처리
+ */
+class MatchNode : public ASTNode {
+public:
+    std::shared_ptr<ASTNode> expr;              // match 대상 (보통 Result)
+    std::vector<MatchArm> arms;                 // match 패턴들
+
+    MatchNode(std::shared_ptr<ASTNode> e, std::vector<MatchArm> a)
+        : ASTNode(NodeType::Match), expr(e), arms(a) {}
+
+    std::string toString() const override {
+        return "Match(" + (expr ? expr->toString() : "?") + ", " +
+               std::to_string(arms.size()) + " arms)";
     }
 };
 

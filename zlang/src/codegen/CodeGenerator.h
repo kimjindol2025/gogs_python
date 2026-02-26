@@ -231,6 +231,39 @@ private:
      */
     LLVMValueRef visitBlock(const std::shared_ptr<BlockNode>& block);
 
+    /**
+     * 1️⃣2️⃣ visitResultOk: Result::Ok(value) 처리
+     *
+     * Z-Lang 코드:
+     *   return Ok(42);
+     *
+     * 처리: Ok 변형을 struct으로 표현
+     */
+    LLVMValueRef visitResultOk(const std::shared_ptr<ResultOkNode>& ok);
+
+    /**
+     * 1️⃣3️⃣ visitResultErr: Result::Err(error) 처리
+     *
+     * Z-Lang 코드:
+     *   return Err(DivisionError::DivideByZero);
+     *
+     * 처리: Err 변형을 struct으로 표현
+     */
+    LLVMValueRef visitResultErr(const std::shared_ptr<ResultErrNode>& err);
+
+    /**
+     * 1️⃣4️⃣ visitMatch: match 패턴 매칭 처리
+     *
+     * Z-Lang 코드:
+     *   match divide(10, 0) {
+     *       Ok(result) => return result,
+     *       Err(e) => return -1,
+     *   }
+     *
+     * 처리: Result 값의 변형(tag) 확인 후 해당 블록 실행
+     */
+    LLVMValueRef visitMatch(const std::shared_ptr<MatchNode>& match_expr);
+
     // ========================================================================
     // 【 Task 2: 타입 매핑 헬퍼 함수 】
     // ========================================================================

@@ -98,6 +98,36 @@ LLVMTypeRef CodeGenerator::convertType(const Type& ztype) {
             // 문자열: i8* 포인터로 표현
             return LLVMPointerType(LLVMInt8TypeInContext(context), 0);
 
+        // 【 Step 2: Result<T, E> 타입 】
+        // Result는 { tag: i1, value: T | error: E } 구조체로 표현
+        case BuiltinType::Result: {
+            if (!ztype.ok_type || !ztype.err_type) {
+                reportError("convertType: Result requires ok_type and err_type");
+                return LLVMVoidTypeInContext(context);
+            }
+            // Result struct: { i1 tag, union { T, E } }
+            LLVMTypeRef tag_type = LLVMInt1TypeInContext(context);
+            LLVMTypeRef ok_llvm = convertType(*ztype.ok_type);
+            LLVMTypeRef err_llvm = convertType(*ztype.err_type);
+
+            // 간단한 구현: { i1, i64, i64 } (tag + 두 타입의 union)
+            std::vector<LLVMTypeRef> result_fields = { tag_type, ok_llvm, err_llvm };
+            return LLVMStructType(result_fields.data(), result_fields.size(), 0);
+        }
+
+        // 【 Step 2: Option<T> 타입 】
+        // Option은 { has_value: i1, value: T } 구조체로 표현
+        case BuiltinType::Option: {
+            if (!ztype.value_type) {
+                reportError("convertType: Option requires value_type");
+                return LLVMVoidTypeInContext(context);
+            }
+            LLVMTypeRef has_value = LLVMInt1TypeInContext(context);
+            LLVMTypeRef value_llvm = convertType(*ztype.value_type);
+            std::vector<LLVMTypeRef> option_fields = { has_value, value_llvm };
+            return LLVMStructType(option_fields.data(), option_fields.size(), 0);
+        }
+
         default:
             reportError("convertType: Unknown type");
             return LLVMVoidTypeInContext(context);
@@ -628,6 +658,16 @@ LLVMValueRef CodeGenerator::visitNode(const std::shared_ptr<ASTNode>& node) {
         case ASTNode::NodeType::Function:
             return visitFunction(std::dynamic_pointer_cast<FunctionNode>(node));
 
+        // 【 Step 2: Result Type Nodes 】
+        case ASTNode::NodeType::ResultOk:
+            return visitResultOk(std::dynamic_pointer_cast<ResultOkNode>(node));
+
+        case ASTNode::NodeType::ResultErr:
+            return visitResultErr(std::dynamic_pointer_cast<ResultErrNode>(node));
+
+        case ASTNode::NodeType::Match:
+            return visitMatch(std::dynamic_pointer_cast<MatchNode>(node));
+
         default:
             reportError("visitNode: Unknown node type");
             return nullptr;
@@ -693,6 +733,80 @@ void CodeGenerator::callRuntimeError(const std::string& error_type, const std::s
     // 향후 구현: exception handler로 전환
     // 현재: 컴파일 타임 경고
     reportError("[" + error_type + "] " + message);
+}
+
+// ============================================================================
+// 【 Step 2: Result<T, E> Visitor Implementation 】
+// ============================================================================
+
+/**
+ * visitResultOk: Result::Ok(value) 생성
+ * - Result 구조체: { tag=1, value, error_placeholder }
+ */
+LLVMValueRef CodeGenerator::visitResultOk(const std::shared_ptr<ResultOkNode>& ok) {
+    if (!ok || !ok->value) return nullptr;
+
+    // 값 평가
+    LLVMValueRef value = visitNode(ok->value);
+    if (!value) {
+        reportError("visitResultOk: Failed to evaluate value");
+        return nullptr;
+    }
+
+    // Result struct 생성: { i1 tag=true, value, error }
+    // 현재: 간단한 구현으로 값만 반환
+    // 향후: struct 구성으로 확장
+    return value;
+}
+
+/**
+ * visitResultErr: Result::Err(error) 생성
+ * - Result 구조체: { tag=0, value_placeholder, error }
+ */
+LLVMValueRef CodeGenerator::visitResultErr(const std::shared_ptr<ResultErrNode>& err) {
+    if (!err || !err->error) return nullptr;
+
+    // 오류 값 평가
+    LLVMValueRef error = visitNode(err->error);
+    if (!error) {
+        reportError("visitResultErr: Failed to evaluate error");
+        return nullptr;
+    }
+
+    // Result struct 생성: { i1 tag=false, value, error }
+    // 현재: 간단한 구현으로 오류만 반환
+    // 향후: struct 구성으로 확장
+    return error;
+}
+
+/**
+ * visitMatch: match 패턴 매칭
+ * - Result 값의 tag 확인
+ * - Ok 또는 Err에 따라 해당 블록 실행
+ */
+LLVMValueRef CodeGenerator::visitMatch(const std::shared_ptr<MatchNode>& match_expr) {
+    if (!match_expr || !match_expr->expr) return nullptr;
+
+    // match 대상 값 평가
+    LLVMValueRef result_val = visitNode(match_expr->expr);
+    if (!result_val) {
+        reportError("visitMatch: Failed to evaluate match expression");
+        return nullptr;
+    }
+
+    // 현재: 간단한 구현
+    // 향후: Result tag 확인 후 조건 분기로 각 arm 실행
+    if (match_expr->arms.empty()) {
+        reportError("visitMatch: No match arms");
+        return nullptr;
+    }
+
+    // 첫 번째 arm만 실행 (임시)
+    if (match_expr->arms[0].body) {
+        return visitBlock(match_expr->arms[0].body);
+    }
+
+    return nullptr;
 }
 
 } // namespace zlang
