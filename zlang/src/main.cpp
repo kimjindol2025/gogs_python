@@ -19,6 +19,7 @@
 #include "semantic/SymbolTable.h"
 #include "lexer/Lexer.h"
 #include "parser/Parser.h"
+#include "analysis/WCETAnalyzer.h"  // 【 Step 4: WCET Analysis 】
 
 using namespace zlang;
 
@@ -396,6 +397,15 @@ public:
             std::cerr << "❌ 최적화 실패" << std::endl;
             LLVMDisposeModule(module);
             return 1;
+        }
+
+        // 【 Stage 4.5: WCET Analysis (최악의 경우 실행 시간 분석) 】
+        if (verbose) std::cout << "🔄 Stage 4.5: WCET 분석 중..." << std::endl;
+        WCETAnalyzer wcet_analyzer;
+        if (!wcet_analyzer.analyze(ast)) {
+            if (verbose) std::cout << "⚠️  WCET 분석 완료 (정보 제공용)" << std::endl;
+        } else {
+            wcet_analyzer.printReport();
         }
 
         // Stage 6: Emit IR
