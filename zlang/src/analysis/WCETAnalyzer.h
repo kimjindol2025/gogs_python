@@ -24,6 +24,22 @@ struct WCETInfo {
     bool has_loop = false;
     int loop_depth = 0;
     bool is_critical_path = false;  // 임계 경로 여부
+
+    // 【 Real-Time 확장 】
+    unsigned long loop_bound = 0;   // 루프 반복 횟수 (분석됨)
+    bool has_unbounded_loop = false;// 무한 루프 여부
+    unsigned long stack_usage = 0;  // 스택 사용량 (바이트)
+    bool is_stack_safe = true;      // 스택 오버플로우 안전성
+};
+
+/**
+ * Memory Safety 분석 정보
+ */
+struct MemorySafetyInfo {
+    bool has_dynamic_allocation = false;    // malloc/new 사용 여부
+    bool has_unbounded_arrays = false;      // 크기 미결정 배열 여부
+    int pointer_dereference_count = 0;      // 포인터 참조 횟수
+    bool is_memory_safe = true;             // 메모리 안전성
 };
 
 /**
@@ -65,9 +81,46 @@ public:
      */
     void printReport() const;
 
+    // 【 Real-Time 확장 기능 】
+
+    /**
+     * Loop Bound 분석 (루프 반복 횟수 추정)
+     */
+    bool analyzeLoopBounds(const std::shared_ptr<ProgramNode>& program);
+
+    /**
+     * Memory Safety 분석 (동적 할당 감지)
+     */
+    bool analyzeMemorySafety(const std::shared_ptr<ProgramNode>& program);
+
+    /**
+     * Stack Usage 분석 (스택 사용량 계산)
+     */
+    bool analyzeStackUsage(const std::shared_ptr<ProgramNode>& program);
+
+    /**
+     * No-Alloc 검증 (동적 할당 금지 확인)
+     */
+    bool verifyNoAlloc(const std::shared_ptr<ProgramNode>& program);
+
+    /**
+     * Real-Time 적합성 검증
+     */
+    bool verifyRealTimeCompliance(const std::shared_ptr<ProgramNode>& program);
+
+    /**
+     * 상세 보고서 생성
+     */
+    void printDetailedReport() const;
+
 private:
     std::unordered_map<std::string, WCETInfo> wcet_map;
+    std::unordered_map<std::string, MemorySafetyInfo> memory_map;
     std::vector<std::string> critical_paths;
+
+    // Real-Time 검증 정보
+    bool is_real_time_safe = true;
+    std::vector<std::string> violations;  // 위반 사항 목록
 
     // 분석 헬퍼
     unsigned long analyzeNode(const std::shared_ptr<ASTNode>& node, int depth);
@@ -75,6 +128,13 @@ private:
 
     // 명령어별 사이클 수 추정
     unsigned long getInstructionCycles(const std::string& instr_type);
+
+    // 루프 경계 추정
+    unsigned long estimateLoopBound(const std::shared_ptr<ASTNode>& condition);
+
+    // 메모리 접근 분석
+    void analyzeMemoryAccess(const std::shared_ptr<ASTNode>& node,
+                            MemorySafetyInfo& info);
 };
 
 } // namespace zlang
